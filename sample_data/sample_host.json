@@ -1,0 +1,15 @@
+{
+  "permission_issues": ["/etc/shadow mode is 0644; expected 0640 or stricter"],
+  "unexpected_suid": ["/usr/local/bin/legacy-helper"],
+  "running_services": ["cron", "dbus", "ssh"],
+  "listening_ports": [22, 631],
+  "failed_logins": 4,
+  "password_policy_ok": false,
+  "password_policy_evidence": "PASS_MAX_DAYS=99999; PASS_MIN_LEN unset",
+  "firewall_active": true,
+  "admin_users": ["root", "student"],
+  "world_writable_files": ["/var/tmp/lab-notes.txt"],
+  "security_updates": 3,
+  "ssh_secure": false,
+  "ssh_evidence": "PermitRootLogin=yes; PasswordAuthentication=yes"
+}
