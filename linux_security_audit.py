@@ -7,7 +7,6 @@ import argparse
 import json
 import os
 import platform
-import pwd
 import re
 import shutil
 import socket
@@ -17,6 +16,13 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable
+
+try:
+    import grp
+    import pwd
+except ImportError:  # Windows and macOS do not provide Linux account modules.
+    grp = None
+    pwd = None
 
 
 @dataclass
@@ -111,6 +117,8 @@ def find_files(roots: Iterable[str], predicate: Callable[[os.stat_result], bool]
 def audit_live(scan_roots: list[str], runner: CommandRunner) -> list[Finding]:
     if platform.system() != "Linux":
         raise RuntimeError("Live mode requires Linux. Use --mode sample on Windows or macOS.")
+    if pwd is None or grp is None:
+        raise RuntimeError("Linux account modules are unavailable in this Python installation.")
     findings = [check_important_permissions(["/etc/passwd", "/etc/shadow", "/etc/ssh/sshd_config"])]
 
     suid = find_files(scan_roots, lambda s: bool(s.st_mode & stat.S_ISUID))
@@ -160,7 +168,7 @@ def audit_live(scan_roots: list[str], runner: CommandRunner) -> list[Finding]:
 
     admins = []
     for entry in pwd.getpwall():
-        groups = {g.gr_name for g in __import__("grp").getgrall() if entry.pw_name in g.gr_mem}
+        groups = {g.gr_name for g in grp.getgrall() if entry.pw_name in g.gr_mem}
         if entry.pw_uid == 0 or groups.intersection({"sudo", "wheel"}):
             admins.append(entry.pw_name)
     findings.append(finding("admins", len(admins) <= 3, "Administrative users",
